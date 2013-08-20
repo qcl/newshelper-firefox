@@ -1,0 +1,9 @@
+{
+  "name": "newshelper-firefox",
+  "fullName": "新聞小幫手",
+  "id": "jid1-5j2AI5MdmsLUww",
+  "description": "協助您判別含有誤導資訊的新聞",
+  "author": "",
+  "license": "MPL 2.0",
+  "version": "0.1"
+}
