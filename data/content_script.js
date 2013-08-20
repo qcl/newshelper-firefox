@@ -66,16 +66,14 @@ var check_recent_seen = function(report){
       };
 
       // 如果已經被刪除了就跳過
-      chrome.extension.sendRequest({
-        method: 'add_notification',
+      self.port.emit("notify",{
         title: '新聞小幫手提醒您',
         body: '您於' + get_time_diff(get_request.result.last_seen_at) + ' 看的新聞「' + get_request.result.title + '」 被人回報有錯誤：' + report.report_title,
         link: report.report_link
-      }, function(response){});
+      });
     };
   });
 };
-
 
 var get_recent_report = function(cb){
   get_newshelper_db(function(opened_db){
@@ -94,25 +92,32 @@ var get_recent_report = function(cb){
 };
 
 
+self.port.on("get_data",function(ret){
+  var transaction = opened_db.transaction("report", 'readwrite');
+  var objectStore = transaction.objectStore("report");
+  if (ret.data) {
+    for (var i = 0; i < ret.data.length; i ++) {
+      objectStore.put(ret.data[i]);
+
+      // 檢查最近天看過的內容是否有被加進去的
+      check_recent_seen(ret.data[i]);
+    }
+  }
+
+  // 每 5 分鐘去檢查一次是否有更新
+  setTimeout(sync_report_data, 300000);
+
+});
+
 // 跟遠端 API server 同步回報資料
 var sync_report_data = function(){
   get_newshelper_db(function(opened_db){
     get_recent_report(function(report){
-      $.get('http://newshelper.g0v.tw/index/data?time=' + (report ? parseInt(report.updated_at) : 0), function(ret){
-        var transaction = opened_db.transaction("report", 'readwrite');
-        var objectStore = transaction.objectStore("report");
-        if (ret.data) {
-          for (var i = 0; i < ret.data.length; i ++) {
-            objectStore.put(ret.data[i]);
 
-            // 檢查最近天看過的內容是否有被加進去的
-            check_recent_seen(ret.data[i]);
-          }
-        }
+      var url = 'http://newshelper.g0v.tw/index/data?time=' + (report ? parseInt(report.updated_at) : 0);
 
-        // 每 5 分鐘去檢查一次是否有更新
-        setTimeout(sync_report_data, 300000);
-      }, 'json');
+      self.port.emit("query_data",url);
+
     });
   });
 };
@@ -194,6 +199,7 @@ var buildWarningMessage = function(options){
 
 var censorFacebook = function(baseNode) {
   if (window.location.host.indexOf("www.facebook.com") !== -1) {
+
     /* log browsing history into local database for further warning */
     /* add warning message to a Facebook post if necessary */
     var censorFacebookNode = function(containerNode, titleText, linkHref) {
@@ -340,10 +346,11 @@ var buildActionBar = function(options) {
 
 var main = function() {
   $(function(){
+
     /* fire up right after the page loaded*/
     censorFacebook(document.body);
 
-    chrome.extension.sendRequest({method: 'page'}, function(response){});
+    //chrome.extension.sendRequest({method: 'page'}, function(response){});
     sync_report_data();
 
     /* deal with changed DOMs (i.e. AJAX-loaded content) */
