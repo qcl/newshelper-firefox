@@ -2,6 +2,8 @@
 ==========
 協助您判別含有誤導資訊的新聞，目前仍屬測試版。這是[新聞小幫手 github/g0v/newshelper-extension](https://github.com/g0v/newshelper-extension)的Firefox版本。
 
+不過在我寫了之後發現 racklin 大大已經寫了一個[新聞小幫手 newshelper-firefox](https://github.com/racklin/newshelper-firefox)，並且可以從[Firefox附加元件中心](https://addons.mozilla.org/zh-TW/firefox/addon/newshelper-firefox/)下載，還支援了Google+，真是太威猛了！
+
 
 Download
 -------
